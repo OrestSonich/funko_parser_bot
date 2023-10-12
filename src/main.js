@@ -1,7 +1,7 @@
-import { configDotenv } from "dotenv"
+import 'dotenv/config'
 import { Telegraf } from 'telegraf'
 import { fetchRarityCards } from "./funkoApiService.js"
-const TOKEN = configDotenv().parsed.TOKEN
+const TOKEN = process.env.TOKEN
 const bot = new Telegraf(TOKEN)
 
 bot.start( async ctx => {
