@@ -1,51 +1,44 @@
 import 'dotenv/config'
-import { Telegraf } from 'telegraf'
-import { fetchRarityCards } from "./funkoApiService.js"
+import { Composer, Markup, Scenes, session, Telegraf } from 'telegraf'
+import { packsCostScene } from "./packsCostScene.js"
+import { mainMenu } from "./buttons.js"
+import { backMenu, startPacksCost, startParseRarity } from "./commands.js"
+import { parseRarity } from "./parseRarityScene.js"
+import { fetchPacksCosts } from "./funkoApiService.js"
 const TOKEN = process.env.TOKEN
 const bot = new Telegraf(TOKEN)
+
+
+const stage = new Scenes.Stage([packsCostScene, parseRarity])
+bot.use(session())
+bot.use(stage.middleware())
+bot.hears('Саплай рідких нфт 🎭', startParseRarity)
+bot.hears('Ціна паків 💸', startPacksCost)
 
 bot.start( async ctx => {
  try{
   await ctx.replyWithPhoto({source: '\wax.webp'})
-  await ctx.reply("Привіт, я бот для парсингу фанко 👋\nЩоб почати роботу обери /parse")
-  console.log(ctx.message.chat.id)
+  await ctx.reply("Привіт, я бот для парсингу фанко 👋\nЩоб почати натисни на потрібну кнопку ⬇",
+                  {... mainMenu})
  }
  catch (e){
   console.error(e)
  }
 })
 
-bot.command('parse', async ctx => {
- await ctx.replyWithHTML(`Надішли мені назву колекції \nВ форматі - <b>steven.funko</b>`)
+bot.command('info', async ctx => {
+ await fetchPacksCosts()
+ return ctx.replyWithHTML(`Цей бот створений для аналізу <b>funko pop nft</b>
+<i>Автор:</i> @sonichorest, <a href="https://github.com/OrestSonich">GitHub</a>\n
+Перезапустити бота - /start
+Відкрити меню - /menu`, {disable_web_page_preview: true})
 })
 
-bot.on('text', async ctx => {
- try {
-  const collectionName = ctx.message.text.trim().toLowerCase()
-  const { message_id } = await ctx.reply("Обробка...")
-  const result = fetchRarityCards(collectionName)
-  result.then(value => {
-   if(value.length===0){
-    return ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, '❌ Некоректна назва колекції')
-   } else {
-    ctx.telegram.editMessageText(ctx.chat.id,
-                                 message_id,
-                                 0,
-                                 {text: `Collection: <b>${value[0].collection.name}</b>:`,
-                                  parse_mode: 'html'})
-    let response = "";
-    value.map((el) => response += (`Name: ${el.immutable_data.name},
-Rarity: <b>${el.immutable_data.rarity}</b>,
-Supply: <i>${el.max_supply}/${el.issued_supply}</i>\n\n`))
-
-    setTimeout(()=> ctx.replyWithHTML(response), 500)
-   }
-  })
- }
- catch (e) {
-  console.error(e)
- }
+bot.command('menu', async ctx => {
+ backMenu(ctx)
 })
+
+
 
 
 
