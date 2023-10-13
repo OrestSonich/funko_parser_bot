@@ -15,35 +15,33 @@ parseRarity.hears('◀ Повернутись до головного меню',
 
 parseRarity.on('text', async ctx => {
     try {
-        const { message_id } = await ctx.reply("Обробка...")
+        const { message_id } = await ctx.reply("Обробка...");
 
-        const collectionName = ctx.message.text.trim().toLowerCase()
-        if (/[а-я]/i.test(collectionName)){
-            ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, '❌ Некоректна назва колекції')
-            return ctx.reply("Спробуйте ще раз:", {...backMenuBtn})
+        const collectionName = ctx.message.text.trim().toLowerCase();
+        if (/[а-я]/i.test(collectionName)) {
+            ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, '❌ Некоректна назва колекції');
+            return ctx.reply("Спробуйте ще раз:", { ...backMenuBtn });
         }
 
-        const result = fetchRarityCards(collectionName)
-        result.then(value => {
-            if(value.length===0){
-                ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, '❌ Некоректна назва колекції')
-                return ctx.reply("Спробуйте ще раз:", {...backMenuBtn})
-            } else {
-                ctx.telegram.editMessageText(ctx.chat.id,
-                                             message_id,
-                                             0,
-                                             {text: `Collection: <b>${value[0].collection.name}</b>:`,
-                                                 parse_mode: 'html'})
-                let response = "";
-                value.map((el) => response += (`Name: ${el.immutable_data.name},
-Rarity: <b>${el.immutable_data.rarity}</b>,
-Supply: <i>${el.max_supply}/${el.issued_supply}</i>\n\n`))
+        const result = await fetchRarityCards(collectionName);
 
-                setTimeout(()=> ctx.replyWithHTML(response, {...backMenuBtn}), 500)
-            }
-        })
+        if (result.length === 0) {
+            ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, '❌ Некоректна назва колекції');
+            return ctx.reply("Спробуйте ще раз:", { ...backMenuBtn });
+        } else {
+            ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, {
+                text: `Collection: <b>${result[0].collection.name}</b>:`,
+                parse_mode: 'html'
+            });
+
+            let response = "";
+            result.forEach(el => {
+                response += `Name: ${el.immutable_data.name},\nRarity: <b>${el.immutable_data.rarity}</b>,\nSupply: <i>${el.max_supply}/${el.issued_supply}</i>\n\n`;
+            });
+
+            setTimeout(() => ctx.replyWithHTML(response, { ...backMenuBtn }), 500);
+        }
+    } catch (e) {
+        console.error(e);
     }
-    catch (e) {
-        console.error(e)
-    }
-})
+});

@@ -1,36 +1,65 @@
-
-import fetch from 'node-fetch'
 import axios from "axios"
-export const fetchRarityCards = async ( collectionName ) => {
+export const fetchRarityCards = async (collectionName) => {
     try {
+        const url = `https://wax.api.atomicassets.io/atomicassets/v1/templates?collection_name=${collectionName}&page=1&limit=100&order=desc&sort=name`;
 
-        const response = await fetch(`https://wax.api.atomicassets.io/atomicassets/v1/templates?collection_name=${collectionName}&page=1&limit=100&order=desc&sort=name`)
-        const json = await response.json()
+        const response = await axios.get(url);
 
-        return json.data.filter((element) => {
-            let cardRarity = element.immutable_data.rarity;
-            return cardRarity === '1 of 1' || cardRarity ===  "Legendary" || cardRarity === 'Grail'
-        })
+        if (response.status !== 200) {
+            throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+        }
+
+        const jsonData = response.data;
+
+        return jsonData.data.filter((element) => {
+            const cardRarity = element.immutable_data.rarity;
+            return cardRarity === '1 of 1' || cardRarity === 'Legendary' || cardRarity === 'Grail';
+        });
 
     } catch (error) {
-        console.error(error)
+        console.error(error);
+        return [];
     }
 };
 
 export const fetchPacksCosts = async (collectionName) => {
-    const {data} = await axios.get(`https://wax.api.atomicassets.io/atomicassets/v1/templates?collection_name=${collectionName}&schema_name=packs.drop&page=1&limit=100&order=desc&sort=created`)
-    let packs = [];
-    data.data.map(async el => { packs.push({
-        name: el.name,
-        image: "https://atomichub-ipfs.com/ipfs/" + el.immutable_data.img,
-        id: el.template_id,
-        collection: el.collection.name
-                                        })
+    try {
+        const { data: templateData } = await axios.get(`https://wax.api.atomicassets.io/atomicassets/v1/templates?collection_name=${collectionName}&schema_name=packs.drop&page=1&limit=100&order=desc&sort=created`);
+
+        return await Promise.all(templateData.data.map(async (el) => {
+            const templateId = el.template_id;
+            const imageUrl = `https://atomichub-ipfs.com/ipfs/${el.immutable_data.img}`;
+            const collectionName = el.collection.name;
+
+            const { data: salesData } = await axios.get(`https://wax.api.atomicassets.io/atomicmarket/v1/sales/templates?symbol=WAX&template_id=${templateId}&page=1&limit=1&order=desc&sort=price`);
+
+            const price = salesData.data[0]?.price.amount || 0;
+
+            const priceInUsd = ((price/100000000) * await fetchWaxUsdRate()).toFixed(3)
+
+            return {
+                name: el.name,
+                image: imageUrl,
+                id: templateId,
+                collection: collectionName,
+                price: priceInUsd,
+            };
+        }));
+
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+};
+
+export const fetchWaxUsdRate = async () => {
+
+    const {data} = await axios.get('https://rest.coinapi.io/v1/exchangerate/WAX/USD', {
+        headers: {
+            'Accept': 'application/json',
+            'X-CoinAPI-Key': process.env.COIN_API
+        }
     })
 
-    for (let i= 0; i < packs.length; i++ ){
-        let { data } = await axios.get(`https://wax.api.atomicassets.io/atomicmarket/v1/sales/templates?symbol=WAX&template_id=${packs[i].id}&page=1&limit=1&order=desc&sort=price`)
-        packs[i].price = data.data[0].price.amount
-    }
-    return packs
+    return data.rate
 }

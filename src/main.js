@@ -1,10 +1,9 @@
 import 'dotenv/config'
-import { Composer, Markup, Scenes, session, Telegraf } from 'telegraf'
+import { Scenes, session, Telegraf } from 'telegraf'
 import { packsCostScene } from "./packsCostScene.js"
 import { mainMenu } from "./buttons.js"
 import { backMenu, startPacksCost, startParseRarity } from "./commands.js"
 import { parseRarity } from "./parseRarityScene.js"
-import { fetchPacksCosts } from "./funkoApiService.js"
 const TOKEN = process.env.TOKEN
 const bot = new Telegraf(TOKEN)
 
@@ -27,7 +26,6 @@ bot.start( async ctx => {
 })
 
 bot.command('info', async ctx => {
- await fetchPacksCosts()
  return ctx.replyWithHTML(`Цей бот створений для аналізу <b>funko pop nft</b>
 <i>Автор:</i> @sonichorest, <a href="https://github.com/OrestSonich">GitHub</a>\n
 Перезапустити бота - /start
@@ -38,9 +36,7 @@ bot.command('menu', async ctx => {
  backMenu(ctx)
 })
 
-
-
-
+bot.on('text', async ctx => ctx.reply('🤷 Не розумію тебе,\nперевір коректність введення команди.') )
 
 bot.launch()
 

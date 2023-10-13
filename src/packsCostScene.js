@@ -14,42 +14,38 @@ packsCostScene.hears('◀ Повернутись до головного мен�
     return backMenu(ctx)
 })
 packsCostScene.on("text", async ctx => {
-try {
-    const { message_id } = await ctx.reply("Обробка...")
+    try {
+        const { message_id } = await ctx.reply("Обробка...");
 
-    const collectionName = ctx.message.text.trim().toLowerCase()
-    if (/[а-я]/i.test(collectionName)){
-        ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, '❌ Некоректна назва колекції')
-        return ctx.reply("Спробуйте ще раз:", {...backMenuBtn})
+        const collectionName = ctx.message.text.trim().toLowerCase();
+        if (/[а-я]/i.test(collectionName)) {
+            ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, '❌ Некоректна назва колекції');
+            return ctx.reply("Спробуйте ще раз:", { ...backMenuBtn });
+        }
+
+        const result = await fetchPacksCosts(collectionName);
+
+        if (result.length === 0) {
+            ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, '❌ Некоректна назва колекції');
+            return ctx.reply("Спробуйте ще раз:", { ...backMenuBtn });
+        } else {
+            ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, {
+                text: `Collection: <b>${result[0].collection}</b>:`,
+                parse_mode: 'html'
+            });
+
+            for (const el of result) {
+                ctx.replyWithPhoto(
+                    { url: el.image },
+                    {
+                        caption: `Pack: ${el.name}\nCollection: ${el.collection}\nPrice: ${el.price} USD\n`
+                    }
+                );
+            }
+        }
+    } catch (e) {
+        console.log(e);
     }
-    const result = fetchPacksCosts(collectionName)
-    result.then(value => {
-        if(value.length===0){
-            ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, '❌ Некоректна назва колекції')
-            return ctx.reply("Спробуйте ще раз:", {...backMenuBtn})
-        }
-        else {
-            ctx.telegram.editMessageText(ctx.chat.id,
-                                         message_id,
-                                         0,
-                                         {text: `Collection: <b>${value[0].collection}</b>:`,
-                                             parse_mode: 'html'})
-            value.map((el) =>
-                      {
-                          ctx.replyWithPhoto({url: el.image},
-                                             {caption: `Pack: ${el.name}\nCollection: ${el.collection}
-Price: ${el.price} WAX\n`}
-                          )
-//                           ctx.reply(`Pack: ${el.name}\nCollection: ${el.collection}
-// Price: ${el.price} WAX\n`)
-                      })
-
-        }
-    })
-}
-catch (e) {
-    console.log(e)
-}
-})
+});
 
 
