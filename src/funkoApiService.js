@@ -11,10 +11,24 @@ export const fetchRarityCards = async (collectionName) => {
 
         const jsonData = response.data;
 
-        return jsonData.data.filter((element) => {
+        const filteredByRarity = jsonData.data.filter((element) => {
             const cardRarity = element.immutable_data.rarity;
             return cardRarity === '1 of 1' || cardRarity === 'Legendary' || cardRarity === 'Grail';
         });
+
+        return Promise.all(filteredByRarity.map(async (el) => {
+
+            const {data: realSupply} = await axios.get(`https://wax.api.atomicassets.io/atomicassets/v1/accounts?template_id=${el.template_id}&page=1&limit=100&order=desc`)
+            realSupply.data.forEach(acc => {
+                if (acc.account === 'mint.droppp'){
+                    el.issued_supply = el.max_supply - acc.assets
+                }
+            })
+            return el
+        }))
+
+
+
 
     } catch (error) {
         console.error(error);

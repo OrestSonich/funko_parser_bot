@@ -25,6 +25,8 @@ parseRarity.on('text', async ctx => {
 
         const result = await fetchRarityCards(collectionName);
 
+
+
         if (result.length === 0) {
             ctx.telegram.editMessageText(ctx.chat.id, message_id, 0, '❌ Некоректна назва колекції');
             return ctx.reply("Спробуйте ще раз:", { ...backMenuBtn });
@@ -36,7 +38,7 @@ parseRarity.on('text', async ctx => {
 
             let response = "";
             result.forEach(el => {
-                response += `Name: ${el.immutable_data.name},\nRarity: <b>${el.immutable_data.rarity}</b>,\nSupply: <i>${el.max_supply}/${el.issued_supply}</i>\n\n`;
+                response += `Name: ${el.immutable_data.name},\nRarity: <b>${el.immutable_data.rarity}</b>,\nSupply: <i>${el.issued_supply}/${el.max_supply}</i>\n\n`;
             });
 
             setTimeout(() => ctx.replyWithHTML(response, { ...backMenuBtn }), 500);
