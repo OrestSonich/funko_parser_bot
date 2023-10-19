@@ -1,7 +1,7 @@
 import axios from "axios"
-export const fetchRarityCards = async (collectionName) => {
+export const fetchRarityCards = async (collectionName, series = "1") => {
     try {
-        const url = `https://wax.api.atomicassets.io/atomicassets/v1/templates?collection_name=${collectionName}&page=1&limit=100&order=desc&sort=name`;
+        const url = `https://wax.api.atomicassets.io/atomicassets/v1/templates?collection_name=${collectionName}&schema_name=series${series}.drop&page=1&limit=100&order=desc&sort=created`;
 
         const response = await axios.get(url);
 
@@ -26,9 +26,6 @@ export const fetchRarityCards = async (collectionName) => {
             })
             return el
         }))
-
-
-
 
     } catch (error) {
         console.error(error);
@@ -66,7 +63,7 @@ export const fetchPacksCosts = async (collectionName) => {
     }
 };
 
-export const fetchWaxUsdRate = async () => {
+const fetchWaxUsdRate = async () => {
 
     const {data} = await axios.get('https://rest.coinapi.io/v1/exchangerate/WAX/USD', {
         headers: {
@@ -77,3 +74,4 @@ export const fetchWaxUsdRate = async () => {
 
     return data.rate
 }
+

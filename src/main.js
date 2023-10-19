@@ -25,6 +25,11 @@ bot.start( async ctx => {
  }
 })
 
+bot.hears('◀ Повернутись до головного меню', async ctx => {
+ await ctx.scene.leave()
+ return backMenu(ctx)
+})
+
 bot.command('info', async ctx => {
  return ctx.replyWithHTML(`Цей бот створений для аналізу <b>funko pop nft</b>
 <i>Автор:</i> @sonichorest, <a href="https://github.com/OrestSonich">GitHub</a>\n
